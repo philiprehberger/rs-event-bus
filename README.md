@@ -12,7 +12,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-philiprehberger-event-bus = "0.1.4"
+philiprehberger-event-bus = "0.1.5"
 ```
 
 ## Usage
@@ -59,6 +59,14 @@ bus.emit("init"); // once_counter is still 1
 | `bus.max_listeners()` | Get the max listeners setting |
 | `bus.set_max_listeners(max)` | Set the max listeners limit |
 | `ListenerId` | Opaque ID returned by `on`/`once`, used with `off` |
+
+
+## Development
+
+```bash
+cargo test
+cargo clippy -- -D warnings
+```
 
 ## License
 
