@@ -116,12 +116,13 @@ impl EventBus {
         let error_handler: Option<ErrorHandler>;
         {
             let mut inner = self.inner.write().unwrap();
+            error_handler = inner.error_handler.clone();
+
             let Some(listeners) = inner.listeners.get_mut(event) else {
                 return 0;
             };
 
             callbacks = listeners.iter().map(|l| Arc::clone(&l.callback)).collect();
-            error_handler = inner.error_handler.clone();
 
             // Remove one-shot listeners.
             listeners.retain(|l| !l.once);
