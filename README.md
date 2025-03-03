@@ -10,7 +10,7 @@ Thread-safe event bus with typed listeners for Rust
 
 ```toml
 [dependencies]
-philiprehberger-event-bus = "0.2.0"
+philiprehberger-event-bus = "0.2.1"
 ```
 
 ## Usage
@@ -60,7 +60,7 @@ bus.emit("init"); // once_counter is still 1
 | `bus.set_error_handler(handler)` | Set a handler called when a listener panics during emission |
 | `ListenerId` | Opaque ID returned by `on`/`once`, used with `off` |
 
-## Introspection
+### Introspection
 
 Query the bus for registered events and listener counts:
 
@@ -79,7 +79,7 @@ bus.clear_event("click");
 assert_eq!(bus.listener_count("click"), 0);
 ```
 
-## Error Handling
+### Error Handling
 
 By default, a panic inside a listener propagates normally. You can install an
 error handler to catch and log panics without crashing the emitter:
