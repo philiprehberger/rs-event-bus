@@ -10,7 +10,7 @@ Thread-safe event bus with typed listeners for Rust
 
 ```toml
 [dependencies]
-philiprehberger-event-bus = "0.2.2"
+philiprehberger-event-bus = "0.2.3"
 ```
 
 ## Usage
@@ -41,24 +41,6 @@ bus.once("init", move || {
 bus.emit("init"); // once_counter is 1
 bus.emit("init"); // once_counter is still 1
 ```
-
-## API
-
-| Item | Description |
-|------|-------------|
-| `EventBus::new()` | Create a new event bus with default max listeners (10) |
-| `bus.on(event, callback)` | Register a persistent listener; returns `ListenerId` |
-| `bus.once(event, callback)` | Register a one-shot listener; returns `ListenerId` |
-| `bus.off(id)` | Remove a listener by ID; returns `true` if found |
-| `bus.emit(event)` | Emit an event, calling all listeners; returns count called |
-| `bus.listener_count(event)` | Return number of listeners for an event |
-| `bus.event_names()` | Return sorted list of event names with listeners |
-| `bus.clear_event(event)` | Remove all listeners for a specific event |
-| `bus.remove_all_listeners(event)` | Remove listeners for one event (`Some`) or all (`None`) |
-| `bus.max_listeners()` | Get the max listeners setting |
-| `bus.set_max_listeners(max)` | Set the max listeners limit |
-| `bus.set_error_handler(handler)` | Set a handler called when a listener panics during emission |
-| `ListenerId` | Opaque ID returned by `on`/`once`, used with `off` |
 
 ### Introspection
 
@@ -103,6 +85,24 @@ let count = bus.emit("task"); // prints warning, returns 1
 When an error handler is set, `emit` uses `std::panic::catch_unwind` around
 each callback. Panics are reported to the handler and execution continues with
 the remaining listeners.
+
+## API
+
+| Item | Description |
+|------|-------------|
+| `EventBus::new()` | Create a new event bus with default max listeners (10) |
+| `bus.on(event, callback)` | Register a persistent listener; returns `ListenerId` |
+| `bus.once(event, callback)` | Register a one-shot listener; returns `ListenerId` |
+| `bus.off(id)` | Remove a listener by ID; returns `true` if found |
+| `bus.emit(event)` | Emit an event, calling all listeners; returns count called |
+| `bus.listener_count(event)` | Return number of listeners for an event |
+| `bus.event_names()` | Return sorted list of event names with listeners |
+| `bus.clear_event(event)` | Remove all listeners for a specific event |
+| `bus.remove_all_listeners(event)` | Remove listeners for one event (`Some`) or all (`None`) |
+| `bus.max_listeners()` | Get the max listeners setting |
+| `bus.set_max_listeners(max)` | Set the max listeners limit |
+| `bus.set_error_handler(handler)` | Set a handler called when a listener panics during emission |
+| `ListenerId` | Opaque ID returned by `on`/`once`, used with `off` |
 
 ## Development
 
