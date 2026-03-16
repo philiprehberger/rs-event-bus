@@ -12,7 +12,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-philiprehberger-event-bus = "0.1"
+philiprehberger-event-bus = "0.1.4"
 ```
 
 ## Usage
