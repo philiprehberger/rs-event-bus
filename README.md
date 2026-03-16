@@ -1,5 +1,9 @@
 # rs-event-bus
 
+[![CI](https://github.com/philiprehberger/rs-event-bus/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rs-event-bus/actions/workflows/ci.yml)
+[![Crates.io](https://img.shields.io/crates/v/philiprehberger-event-bus.svg)](https://crates.io/crates/philiprehberger-event-bus)
+[![License](https://img.shields.io/github/license/philiprehberger/rs-event-bus)](LICENSE)
+
 Thread-safe event bus with typed listeners for Rust. Supports persistent and one-shot listeners, listener removal by ID, and safe concurrent access from multiple threads.
 
 ## Installation
