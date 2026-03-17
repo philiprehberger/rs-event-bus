@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fmt;
+use std::panic;
 use std::sync::{Arc, RwLock};
 
 /// Opaque identifier for a registered listener.
@@ -12,10 +13,13 @@ struct Listener {
     once: bool,
 }
 
+type ErrorHandler = Arc<dyn Fn(&str, String) + Send + Sync>;
+
 struct Inner {
     listeners: HashMap<String, Vec<Listener>>,
     max_listeners: usize,
     next_id: u64,
+    error_handler: Option<ErrorHandler>,
 }
 
 impl Inner {
@@ -43,6 +47,7 @@ impl EventBus {
                 listeners: HashMap::new(),
                 max_listeners: 10,
                 next_id: 0,
+                error_handler: None,
             })),
         }
     }
@@ -102,10 +107,13 @@ impl EventBus {
     /// listeners that were invoked.
     ///
     /// Callbacks are invoked outside the lock so they may safely call back
-    /// into the bus without deadlocking.
+    /// into the bus without deadlocking. If a listener panics and an error
+    /// handler has been set via [`set_error_handler`](Self::set_error_handler),
+    /// the panic is caught and reported to the handler instead of propagating.
     pub fn emit(&self, event: &str) -> usize {
-        // Collect callbacks and remove once-listeners under the write lock.
+        // Collect callbacks and error handler under the write lock.
         let callbacks: Vec<Arc<dyn Fn() + Send + Sync>>;
+        let error_handler: Option<ErrorHandler>;
         {
             let mut inner = self.inner.write().unwrap();
             let Some(listeners) = inner.listeners.get_mut(event) else {
@@ -113,6 +121,7 @@ impl EventBus {
             };
 
             callbacks = listeners.iter().map(|l| Arc::clone(&l.callback)).collect();
+            error_handler = inner.error_handler.clone();
 
             // Remove one-shot listeners.
             listeners.retain(|l| !l.once);
@@ -125,7 +134,25 @@ impl EventBus {
 
         let count = callbacks.len();
         for cb in &callbacks {
-            cb();
+            if error_handler.is_some() {
+                let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+                    cb();
+                }));
+                if let Err(panic_value) = result {
+                    let message = if let Some(s) = panic_value.downcast_ref::<&str>() {
+                        (*s).to_string()
+                    } else if let Some(s) = panic_value.downcast_ref::<String>() {
+                        s.clone()
+                    } else {
+                        "unknown panic".to_string()
+                    };
+                    if let Some(ref handler) = error_handler {
+                        handler(event, message);
+                    }
+                }
+            } else {
+                cb();
+            }
         }
         count
     }
@@ -155,6 +182,26 @@ impl EventBus {
             .collect();
         names.sort();
         names
+    }
+
+    /// Removes all listeners for a specific event.
+    pub fn clear_event(&self, event_name: &str) {
+        let mut inner = self.inner.write().unwrap();
+        inner.listeners.remove(event_name);
+    }
+
+    /// Set a handler called when a listener panics during emission.
+    ///
+    /// When set, panics inside listener callbacks are caught via
+    /// [`std::panic::catch_unwind`] and reported to this handler with the
+    /// event name and a string description of the panic. Without an error
+    /// handler, panics propagate normally.
+    pub fn set_error_handler<F>(&self, handler: F)
+    where
+        F: Fn(&str, String) + Send + Sync + 'static,
+    {
+        let mut inner = self.inner.write().unwrap();
+        inner.error_handler = Some(Arc::new(handler));
     }
 
     /// Remove listeners. If `event` is `Some`, only listeners for that event are
@@ -367,5 +414,99 @@ mod tests {
     fn emit_no_listeners() {
         let bus = EventBus::new();
         assert_eq!(bus.emit("nonexistent"), 0);
+    }
+
+    #[test]
+    fn clear_event_removes_all_for_event() {
+        let bus = EventBus::new();
+        let counter_a = Arc::new(AtomicUsize::new(0));
+        let counter_b = Arc::new(AtomicUsize::new(0));
+
+        let ca = counter_a.clone();
+        bus.on("a", move || {
+            ca.fetch_add(1, Ordering::SeqCst);
+        });
+        bus.on("a", move || {});
+        let cb = counter_b.clone();
+        bus.on("b", move || {
+            cb.fetch_add(1, Ordering::SeqCst);
+        });
+
+        assert_eq!(bus.listener_count("a"), 2);
+        bus.clear_event("a");
+        assert_eq!(bus.listener_count("a"), 0);
+        bus.emit("a");
+        bus.emit("b");
+
+        assert_eq!(counter_a.load(Ordering::SeqCst), 0);
+        assert_eq!(counter_b.load(Ordering::SeqCst), 1);
+    }
+
+    #[test]
+    fn clear_event_nonexistent_is_noop() {
+        let bus = EventBus::new();
+        bus.clear_event("nope"); // should not panic
+    }
+
+    #[test]
+    fn error_handler_catches_panic() {
+        let bus = EventBus::new();
+        let caught = Arc::new(RwLock::new(Vec::<(String, String)>::new()));
+        let c = caught.clone();
+        bus.set_error_handler(move |event, msg| {
+            c.write().unwrap().push((event.to_string(), msg));
+        });
+
+        bus.on("boom", || {
+            panic!("listener exploded");
+        });
+        let count = bus.emit("boom");
+        assert_eq!(count, 1);
+
+        let errors = caught.read().unwrap();
+        assert_eq!(errors.len(), 1);
+        assert_eq!(errors[0].0, "boom");
+        assert!(errors[0].1.contains("listener exploded"));
+    }
+
+    #[test]
+    fn error_handler_does_not_stop_other_listeners() {
+        let bus = EventBus::new();
+        let counter = Arc::new(AtomicUsize::new(0));
+        let caught = Arc::new(AtomicUsize::new(0));
+
+        let cc = caught.clone();
+        bus.set_error_handler(move |_event, _msg| {
+            cc.fetch_add(1, Ordering::SeqCst);
+        });
+
+        let c = counter.clone();
+        bus.on("mixed", move || {
+            c.fetch_add(1, Ordering::SeqCst);
+        });
+        bus.on("mixed", || {
+            panic!("bad listener");
+        });
+        let c = counter.clone();
+        bus.on("mixed", move || {
+            c.fetch_add(1, Ordering::SeqCst);
+        });
+
+        let count = bus.emit("mixed");
+        assert_eq!(count, 3);
+        assert_eq!(counter.load(Ordering::SeqCst), 2);
+        assert_eq!(caught.load(Ordering::SeqCst), 1);
+    }
+
+    #[test]
+    fn without_error_handler_panic_propagates() {
+        let bus = EventBus::new();
+        bus.on("boom", || {
+            panic!("no handler");
+        });
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            bus.emit("boom");
+        }));
+        assert!(result.is_err());
     }
 }
