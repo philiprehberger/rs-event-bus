@@ -4,11 +4,9 @@
 [![Crates.io](https://img.shields.io/crates/v/philiprehberger-event-bus.svg)](https://crates.io/crates/philiprehberger-event-bus)
 [![License](https://img.shields.io/github/license/philiprehberger/rs-event-bus)](LICENSE)
 
-Thread-safe event bus with typed listeners for Rust. Supports persistent and one-shot listeners, listener removal by ID, and safe concurrent access from multiple threads.
+Thread-safe event bus with typed listeners for Rust
 
 ## Installation
-
-Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]

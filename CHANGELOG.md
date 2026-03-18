@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0
+## 0.2.0 (2026-03-17)
 
 - Add `clear_event(event_name)` to remove all listeners for a specific event
 - Add `set_error_handler()` for catching listener panics during emission
