@@ -1,3 +1,17 @@
+//! Thread-safe event bus with typed listeners.
+//!
+//! # Example
+//!
+//! ```rust
+//! use philiprehberger_event_bus::EventBus;
+//!
+//! let bus = EventBus::new();
+//! bus.on("greet", |payload: &str| {
+//!     println!("Hello, {}!", payload);
+//! });
+//! bus.emit("greet", &"World");
+//! ```
+
 use std::collections::HashMap;
 use std::fmt;
 use std::panic;
