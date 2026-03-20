@@ -6,10 +6,10 @@
 //! use philiprehberger_event_bus::EventBus;
 //!
 //! let bus = EventBus::new();
-//! bus.on("greet", |payload: &str| {
-//!     println!("Hello, {}!", payload);
+//! bus.on("greet", || {
+//!     println!("Hello!");
 //! });
-//! bus.emit("greet", &"World");
+//! bus.emit("greet");
 //! ```
 
 use std::collections::HashMap;
