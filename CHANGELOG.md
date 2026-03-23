@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2 (2026-03-22)
+
+- Fix CHANGELOG compliance
+
 ## 0.2.1 (2026-03-17)
 
 - Add crate-level documentation with usage examples
@@ -10,10 +14,11 @@
 - Add `set_error_handler()` for catching listener panics during emission
 - Panics in listeners are caught via `std::panic::catch_unwind` when an error handler is set
 
-## 0.1.5
+## 0.1.5 (2026-03-17)
 
 - Add readme, rust-version, documentation to Cargo.toml
 - Add Development section to README
+
 ## 0.1.4 (2026-03-16)
 
 - Update install snippet to use full version

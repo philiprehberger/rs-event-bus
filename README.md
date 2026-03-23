@@ -10,7 +10,7 @@ Thread-safe event bus with typed listeners for Rust
 
 ```toml
 [dependencies]
-philiprehberger-event-bus = "0.2.1"
+philiprehberger-event-bus = "0.2.2"
 ```
 
 ## Usage
