@@ -3,6 +3,7 @@
 [![CI](https://github.com/philiprehberger/rs-event-bus/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rs-event-bus/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/philiprehberger-event-bus.svg)](https://crates.io/crates/philiprehberger-event-bus)
 [![License](https://img.shields.io/github/license/philiprehberger/rs-event-bus)](LICENSE)
+[![Sponsor](https://img.shields.io/badge/sponsor-GitHub%20Sponsors-ec6cb9)](https://github.com/sponsors/philiprehberger)
 
 Thread-safe event bus with typed listeners for Rust
 
